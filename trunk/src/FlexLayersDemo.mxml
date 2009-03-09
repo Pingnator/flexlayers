@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:flexlayers="edu.psu.geovista.flexlayers.*" layout="absolute" creationComplete="initMap();initMask();">
+	<mx:Script>
+		<![CDATA[
+			import edu.psu.geovista.flexlayers.feature.Vector;
+			import edu.psu.geovista.flexlayers.Util;
+			import edu.psu.geovista.flexlayers.basetypes.Pixel;
+			import edu.psu.geovista.flexlayers.control.LayerSwitcher;
+			import mx.core.UIComponent;
+			import edu.psu.geovista.flexlayers.layer.WFS;
+			import edu.psu.geovista.flexlayers.control.Navigation;
+			import edu.psu.geovista.flexlayers.control.PanZoomBar;
+			import edu.psu.geovista.flexlayers.layer.WMS;
+			import edu.psu.geovista.flexlayers.Map;
+			import edu.psu.geovista.flexlayers.basetypes.Bounds;
+			
+			private function initMap() {
+				var options:Object = {"maxExtent": new Bounds(-77.92,40.75,-77.79,40.85), "maxResolution": 1, "numZoomLevels": 21};
+				var map:Map = new Map("map", mapCanvas, options);
+				var baselayer1:WMS = new WMS("Base Image", "http://www.apps.geovista.psu.edu/tilecache/tilecache.py", {layers: "centreimagerygeogjpeg", FORMAT: "image/jpeg"}, {isBaseLayer: true});
+				
+				var style_blue:Object = Util.extend({}, Vector.style['default']);
+				var style_white:Object = Util.extend({}, Vector.style['default']);
+				style_blue.strokeColor = 0x0000FF;
+				style_white.strokeColor = 0xFFFFFF;
+				
+				var wfslayer1:WFS = new WFS("Blue Course Track", "http://www.apps.geovista.psu.edu/geoserver/wfs", {typename: "golf:golf_7_2207", SRS: "EPSG:4326", VERSION: "1.0.0"}, {isBaseLayer: false, minZoomLevel: 21, style: style_blue});
+				var wfslayer2:WFS = new WFS("White Course Track", "http://www.apps.geovista.psu.edu/geoserver/wfs", {typename: "golf:golftracks2", SRS: "EPSG:4326", VERSION: "1.0.0"}, {isBaseLayer: false, minZoomLevel: 21, style: style_white});
+				map.addLayers([baselayer1, wfslayer1, wfslayer2]);
+				map.addControl(new PanZoomBar());
+				map.addControl(new Navigation());
+				//map.addControl(new LayerSwitcher({position: new Pixel(mapCanvas.width - 200, 0)}));	
+				map.zoomToExtent(new Bounds(-77.92,40.75,-77.79,40.85));
+			}
+			
+			private function initMask() {
+				var square:UIComponent = new UIComponent();
+				square.graphics.beginFill(0xffffff);
+                square.graphics.drawRect(0, 0, mapCanvas.width, mapCanvas.height);
+                square.graphics.endFill();
+                
+                mapBorder.addChild(square);
+                mapBorder.mask = square;
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox height="100%" width="100%">
+		<mx:Canvas id="mapBorder" height="80%" width="100%" borderStyle="solid">
+			<flexlayers:CanvasOL id="mapCanvas" height="100%" width="100%" borderStyle="solid" clipContent="false"/>
+		</mx:Canvas>
+		<mx:Canvas id="descCanvas" height="20%" width="100%" borderStyle="solid" >
+			<mx:Text fontSize="18">
+				<mx:htmlText>
+<![CDATA[This demo of FlexLayers pulls the base image from a WMS-C server and pulls the two separate track layers from a WFS.
+<br>Current Issues:<br>1. DragPan sort of works but is a little jumpy.<br>2. When zooming with the mousewheel, you receive an error related to the WFS layers that can be dismissed.<br>This error does not occur when double-click zooming or using the pan-zoom bar.<br>3. When zooming very close, some tiles become broken. I think this is a number rounding issue.]]>
+				</mx:htmlText>
+			</mx:Text>
+		</mx:Canvas>
+	</mx:VBox>
+</mx:Application>
